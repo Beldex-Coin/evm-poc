@@ -1,0 +1,4 @@
+[submodule "beldex"]
+	path = beldex
+	url = git@github.com:Beldex-Coin/beldex.git
+	branch = evm-poc
