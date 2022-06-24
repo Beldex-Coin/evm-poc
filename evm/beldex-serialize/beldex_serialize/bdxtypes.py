@@ -147,17 +147,16 @@ class TxOut(x.MessageType):
         ('target', TxoutTargetV),
     ]
 
-class OutUnlockTimes(x.ContainerType):
-    __slots__ = ['utime'] 
-    MFIELDS = [ ('utime', x.ContainerType, x.UVarintType), ]
+# class OutUnlockTimes(x.ContainerType):
+#     MFIELDS = [ ('output_unlock_times', x.ContainerType, x.UVarintType), ]
 
-class TypeEnum(x.MessageType): 
+class N_FIELD_Enum(x.MessageType): 
     MFIELDS = [ ('type', x.UVarintType, x.ContainerType), ]
     
 class TransactionPrefix(x.MessageType):
     MFIELDS = [
         ('version', x.UVarintType), #UVarintType, UInt8 #crypto_note -> UInt16
-        ('output_unlock_times', x.ContainerType, OutUnlockTimes), #fStandard size=2
+        ('output_unlock_times', x.ContainerType, x.UVarintType), #fStandard size=2
         ('unlock_time', x.UVarintType), # UVarintType, UInt64
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
