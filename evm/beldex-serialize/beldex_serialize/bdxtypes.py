@@ -5,6 +5,7 @@ bdx types
 '''
 
 
+from xml.dom.pulldom import parseString
 from . import bdxserialize as x
 from . import bdxrpc
 from .bdxserialize import eref
@@ -96,7 +97,6 @@ class TxoutTargetV(x.VariantType):
         ('txout_to_key', TxoutToKey),
     ]
 
-
 class TxinGen(x.MessageType):
     __slots__ = ['height']
     VARIANT_CODE = 0xff
@@ -143,20 +143,35 @@ class TxInV(x.VariantType):
 class TxOut(x.MessageType):
     __slots__ = ['amount', 'target']
     MFIELDS = [
-        ('amount', x.UVarintType),
+        ('amount', x.UVarintType), #UVarintType, UInt64
         ('target', TxoutTargetV),
     ]
 
+class OutUnlockTimes(x.ContainerType): 
+    pass
 
+class TypeEnum(x.ContainerType): 
+    __slots__ = ['type', 'txnFee', 'message', 'mixRing', 'pseudoOuts', 'ecdhInfo', 'outPk']
+    MFIELDS = [
+        ('type', x.UInt8),
+        ('txnFee', x.UVarintType),
+        ('message', ECKey),
+        ('mixRing', x.UVarintType), #CtkeyM
+        ('pseudoOuts', x.UVarintType), #KeyV
+        ('ecdhInfo', x.UVarintType), #EcdhInfo
+        ('outPk', x.UVarintType), #CtkeyV
+    ]
+    
 class TransactionPrefix(x.MessageType):
     MFIELDS = [
-        ('version', x.UVarintType),
-        ('unlock_time', x.UVarintType),
+        ('version', x.UVarintType), #UVarintType, UInt8 #crypto_note -> UInt16
+        ('output_unlock_times', x.ContainerType, OutUnlockTimes), #fStandard size=2
+        ('unlock_time', x.UVarintType), # UVarintType, UInt64
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
-        ('extra', x.ContainerType, x.UInt8),
+        ('extra', x.ContainerType, x.UVarintType), #UInt8
+        # ('type', x.ContainerType, TypeEnum) #Line 214 cryptnote_basic.h
     ]
-
 
 
 class TransactionPrefixExtraBlob(TransactionPrefix):
@@ -1100,7 +1115,7 @@ class PendingTransaction(x.MessageType):
     ]
 
     async def boost_serialize(self, ar, version):
-        if version != 3:
+        if version >= 3: #3 and above
             raise ValueError('Pending transaction v3+ supported only')
         await self._msg_field(ar, idx=0)
         await self._msg_field(ar, idx=1)
