@@ -147,20 +147,12 @@ class TxOut(x.MessageType):
         ('target', TxoutTargetV),
     ]
 
-class OutUnlockTimes(x.ContainerType): 
-    pass
+class OutUnlockTimes(x.ContainerType):
+    __slots__ = ['utime'] 
+    MFIELDS = [ ('utime', x.ContainerType, x.UVarintType), ]
 
-class TypeEnum(x.ContainerType): 
-    __slots__ = ['type', 'txnFee', 'message', 'mixRing', 'pseudoOuts', 'ecdhInfo', 'outPk']
-    MFIELDS = [
-        ('type', x.UInt8),
-        ('txnFee', x.UVarintType),
-        ('message', ECKey),
-        ('mixRing', x.UVarintType), #CtkeyM
-        ('pseudoOuts', x.UVarintType), #KeyV
-        ('ecdhInfo', x.UVarintType), #EcdhInfo
-        ('outPk', x.UVarintType), #CtkeyV
-    ]
+class TypeEnum(x.MessageType): 
+    MFIELDS = [ ('type', x.UVarintType, x.ContainerType), ]
     
 class TransactionPrefix(x.MessageType):
     MFIELDS = [
@@ -169,8 +161,8 @@ class TransactionPrefix(x.MessageType):
         ('unlock_time', x.UVarintType), # UVarintType, UInt64
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
-        ('extra', x.ContainerType, x.UVarintType), #UInt8
-        # ('type', x.ContainerType, TypeEnum) #Line 214 cryptnote_basic.h
+        ('extra', x.ContainerType, x.UInt8), #UInt8
+        ('type', x.UVarintType) #Line 214 cryptnote_basic.h
     ]
 
 
