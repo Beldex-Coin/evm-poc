@@ -5,11 +5,13 @@ bdx types
 '''
 
 
+from telnetlib import EC
 from xml.dom.pulldom import parseString
 from . import bdxserialize as x
 from . import bdxrpc
 from .bdxserialize import eref
 from .core import versioning
+# from . import rcttypes as rct
 
 
 #
@@ -147,12 +149,22 @@ class TxOut(x.MessageType):
         ('target', TxoutTargetV),
     ]
 
-# class OutUnlockTimes(x.ContainerType):
-#     MFIELDS = [ ('output_unlock_times', x.ContainerType, x.UVarintType), ]
+class TestSignature(x.MessageType):
+    __slots__ = ['c', 'r']
+    MFIELDS = [
+        ('c', ECKey),
+        ('r', ECKey),
+    ]
 
-class N_FIELD_Enum(x.MessageType): 
-    MFIELDS = [ ('type', x.UVarintType, x.ContainerType), ]
-    
+    async def serialize_archive(self, ar, version=None):
+        ar.field(eref(self, 'c'), ECKey)
+        ar.field(eref(self, 'r'), ECKey)
+        return self
+
+class TestSignatureArray(x.ContainerType):
+    FIX_SIZE = 0
+    ELEM_TYPE = TestSignature
+
 class TransactionPrefix(x.MessageType):
     MFIELDS = [
         ('version', x.UVarintType), #UVarintType, UInt8 #crypto_note -> UInt16
@@ -161,7 +173,9 @@ class TransactionPrefix(x.MessageType):
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
         ('extra', x.ContainerType, x.UInt8), #UInt8
-        ('type', x.UVarintType) #Line 214 cryptnote_basic.h
+        ('signatures', x.ContainerType, TestSignatureArray),
+        # ('type', x.UInt8), #Line 214 cryptnote_basic.h
+        # ('RCTSig', x.MessageType, EnumFieldN),
     ]
 
 
@@ -238,9 +252,10 @@ class MultisigOut(x.MessageType):
 
 
 class EcdhTuple(x.MessageType):
-    __slots__ = ['mask', 'amount']
+#    __slots__ = ['mask', 'amount']
+    __slots__ = ['amount']
     MFIELDS = [
-        ('mask', ECKey),
+#        ('mask', ECKey),
         ('amount', ECKey),
     ]
 
@@ -337,7 +352,7 @@ async def boost_out_pk(ar, out_pk, version):
 class RctSigBase(x.MessageType):
     __slots__ = ['type', 'txnFee', 'message', 'mixRing', 'pseudoOuts', 'ecdhInfo', 'outPk']
     MFIELDS = [
-        ('type', x.UInt8),
+        ('type', x.UVarintType), 
         ('txnFee', x.UVarintType),
         ('message', ECKey),
         ('mixRing', CtkeyM),
@@ -381,12 +396,13 @@ class RctSigBase(x.MessageType):
             raise ValueError('EcdhInfo size mismatch')
 
         for i in range(outputs):
-            if self.type in (RctType.Bulletproof2, RctType.CLSAG, RctType.BulletproofPlus):
+            if self.type in (RctType.Bulletproof2, RctType.BulletproofPlus, RctType.CLSAG): #
                 am8 = [self.ecdhInfo[i].amount[0:8] if ar.writing else bytearray(0)]
                 await ar.field(eref(am8, 0), Hash8)
                 if not ar.writing:
-                    x.set_elem(eref(self.ecdhInfo[i], 'amount'), am8[0] + bytearray(24))
+                    x.set_elem(eref(self.ecdhInfo[i], 'amount'), am8[0] ) #+ bytearray(24)
                     x.set_elem(eref(self.ecdhInfo[i], 'mask'), bytearray(32))
+                    print(self.ecdhInfo[i], type(self.ecdhInfo[i]))
             else:
                 await ar.field(eref(self.ecdhInfo, i), EcdhInfo.ELEM_TYPE)
         await ar.end_array()
@@ -479,7 +495,7 @@ class RctSigPrunable(x.MessageType):
             if ar.writing:
                 bps[0] = len(self.bulletproofs)
 
-            if type == RctType.Bulletproof2:
+            if type in ( RctType.Bulletproof2, RctType.CLSAG):
                 await ar.field(elem=eref(bps, 0), elem_type=x.UVarintType)
             else:
                 await ar.field(elem=eref(bps, 0), elem_type=x.UInt32)
@@ -570,7 +586,7 @@ class RctSigPrunable(x.MessageType):
                 await ar.end_object()
             await ar.end_array()
 
-        if type in (RctType.Bulletproof, RctType.Bulletproof2):
+        if type in (RctType.Bulletproof, RctType.Bulletproof2, RctType.CLSAG):
             await ar.begin_array()
             await ar.prepare_container(inputs, eref(self, 'pseudoOuts'), elem_type=KeyV)
             if ar.writing and len(self.pseudoOuts) != inputs:

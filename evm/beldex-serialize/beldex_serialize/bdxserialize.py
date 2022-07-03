@@ -34,6 +34,7 @@ required:
 '''
 
 import logging
+from operator import contains
 import sys
 
 from . import helpers
@@ -360,13 +361,16 @@ class Archive(object):
         fname, ftype, params = field[0], field[1], field[2:]
         try:
             print("trying field:", fname)
+            if 'type' in fname:
+                print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+            else:
+                print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
             self.tracker.push_field(fname)
             if self.writing:
                 await self._dump_message_field(self.iobj, msg, field, fvalue=fvalue)
             else:
                 await self._load_message_field(self.iobj, msg, field)
             self.tracker.pop()
-
         except Exception as e:
             raise helpers.ArchiveException(e, tracker=self.tracker) from e
 
@@ -452,7 +456,6 @@ class Archive(object):
             fvalue = await self.blob(
                 elem=get_elem(elem), elem_type=elem_type, params=params
             )
-
         elif self._is_type(etype, UnicodeType):
             fvalue = await self.unicode_type(get_elem(elem))
 
