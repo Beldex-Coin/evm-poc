@@ -149,22 +149,6 @@ class TxOut(x.MessageType):
         ('target', TxoutTargetV),
     ]
 
-class TestSignature(x.MessageType):
-    __slots__ = ['c', 'r']
-    MFIELDS = [
-        ('c', ECKey),
-        ('r', ECKey),
-    ]
-
-    async def serialize_archive(self, ar, version=None):
-        ar.field(eref(self, 'c'), ECKey)
-        ar.field(eref(self, 'r'), ECKey)
-        return self
-
-class TestSignatureArray(x.ContainerType):
-    FIX_SIZE = 0
-    ELEM_TYPE = TestSignature
-
 class TransactionPrefix(x.MessageType):
     MFIELDS = [
         ('version', x.UVarintType), #UVarintType, UInt8 #crypto_note -> UInt16
@@ -173,9 +157,7 @@ class TransactionPrefix(x.MessageType):
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
         ('extra', x.ContainerType, x.UInt8), #UInt8
-        ('signatures', x.ContainerType, TestSignatureArray),
-        # ('type', x.UInt8), #Line 214 cryptnote_basic.h
-        # ('RCTSig', x.MessageType, EnumFieldN),
+        ('txtype', x.UInt8), #Line 214 cryptnote_basic.h
     ]
 
 
