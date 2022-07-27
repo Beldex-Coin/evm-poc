@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 #example: python3 zmqtest.py ipc:///home/allard/.beldex/testnet/beldexd.sock TX
+from pydoc import Helper
 import nacl.bindings as sodium
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey, VerifyKey
@@ -11,7 +12,9 @@ import re
 import time
 import random
 import shutil
+import importlib
 
+bdxdecoder = importlib.import_module("beldex-serialize.beldex_serialize.helper.msgdecoder")
 
 context = zmq.Context()
 socket = context.socket(zmq.DEALER)
@@ -20,10 +23,11 @@ socket.setsockopt(zmq.HANDSHAKE_IVL, 5000)
 #socket.setsockopt(zmq.IMMEDIATE, 1)
 
 if len(sys.argv) > 1 and any(sys.argv[1].startswith(x) for x in ("ipc://", "tcp://")):
+    print(sys.argv)
     remote = sys.argv[1]
     del sys.argv[1]
 else:
-    remote = "ipc://./beldex.sock"
+    remote = "ipc:///home/martijn/.beldex/testnet/beldexd.sock"
 
 curve_pubkey = b''
 my_privkey, my_pubkey = b'', b''
@@ -38,15 +42,6 @@ if len(sys.argv) > 1 and len(sys.argv[1]) == 64 and all(x in "0123456789abcdefAB
     socket.setsockopt(zmq.CURVE_PUBLICKEY, my_pubkey)
     socket.setsockopt(zmq.CURVE_SECRETKEY, my_privkey)
 
-if (not 2 <= len(sys.argv) <= 3
-        or any(x in y for x in ("--help", "-h") for y in sys.argv[1:])
-        or not all(x in ('BLOCK', 'TX', 'FLASH') for x in sys.argv[1:])):
-    print("Usage: {} [ipc:///path/to/sock|tcp://1.2.3.4:5678] [SERVER_CURVE_PUBKEY [LOCAL_CURVE_PRIVKEY]] [BLOCK] [TX|FLASH]\n"
-            "  Connects to the given server and waits for new blocks (if BLOCK specified), new mempool transactions of\n"
-            "  any type (if TX specified), and/or new flashes (if FLASH specified).  TX and FLASH are mutually exclusive.".format(sys.argv[0]),
-            file=sys.stderr)
-    sys.exit(1)
-
 beginning_of_time = time.clock_gettime(time.CLOCK_MONOTONIC)
 
 print("Connecting to {}".format(remote), file=sys.stderr)
@@ -56,27 +51,27 @@ last_sub_time = None
 def subscribe():
     if 'BLOCK' in sys.argv[1:]:
         socket.send_multipart([b'sub.block', b'_blocksub'])
+    elif __debug__:
+        socket.send_multipart([b'sub.block', b'_blocksub'])
     if 'TX' in sys.argv[1:]:
+        socket.send_multipart([b'sub.mempool', b'_txallsub', b'all'])
+    elif __debug__:
         socket.send_multipart([b'sub.mempool', b'_txallsub', b'all'])
     elif 'FLASH' in sys.argv[1:]:
         socket.send_multipart([b'sub.mempool', b'_txflashesub', b'flash'])
     global last_sub_time
     last_sub_time = time.time()
-
 subscribe()
 
 subbed = set()
 
 while True:
     got_msg = socket.poll(timeout=5000)
-
     if last_sub_time + 60 < time.time():
         subscribe()
-
     if not got_msg and not subbed:
         print("Connection timed out")
         sys.exit(1)
-
     if not got_msg:
         continue
 
@@ -93,8 +88,13 @@ while True:
     elif len(m) == 3 and m[0] == b'notify.mempool':
         print("New TX: {}".format(m[1].hex()))
         if len(m)>2:
-            print("Extra [2]", m[2])
-            print("Extra [2] hex", m[2].hex())
+            #print("Extra [2]", m[2])
+            #print("Extra [2] hex", m[2].hex())
+            otx = bdxdecoder.decodePrefix(prefix=m[2])
+            print(otx)
+            if otx.txtype==5:
+                contract = bdxdecoder.decodeContract(otx.extra)
+                print("Handle contract {}".format(''.join(chr(x) for x in contract.contract.contact_name)))
     elif len(m) == 3 and m[0] == b'notify.block':
         print("New block: Height {}, hash {}".format(int(m[1]), m[2].hex()))
     else:

@@ -6,6 +6,7 @@ bdx types
 
 
 from telnetlib import EC
+from typing import Container
 from xml.dom.pulldom import parseString
 from . import bdxserialize as x
 from . import bdxrpc
@@ -156,7 +157,7 @@ class TransactionPrefix(x.MessageType):
         ('unlock_time', x.UVarintType), # UVarintType, UInt64
         ('vin', x.ContainerType, TxInV),
         ('vout', x.ContainerType, TxOut),
-        ('extra', x.ContainerType, x.UInt8), #UInt8
+        ('extra', x.ContainerType, x.UInt8), #x.ContainerType, x.UInt8
         ('txtype', x.UInt8), #Line 214 cryptnote_basic.h
     ]
 
@@ -417,7 +418,6 @@ class RctType(object):
     Bulletproof2 = 4
     CLSAG = 5
     BulletproofPlus = 6
-
     FullBulletproof = 3     # pre v9, deprecated
     SimpleBulletproof = 4   # pre v9, deprecated
 
@@ -851,6 +851,30 @@ class TxExtraAdditionalPubKeys(x.MessageType):
         ('data', x.ContainerType, ECPublicKey),
     ]
 
+class TxExtraToContract(x.MessageType):
+    __slots__ = ['version', 'contact_name', 'contract_source', 'deposit_amount'] 
+    VARIANT_CODE = 0x42
+    MFIELDS = [
+        ('version', x.UInt8),
+        ('contact_name', x.ContainerType, x.UInt8),
+        ('contract_source', x.ContainerType, x.UInt8),
+        ('deposit_amount', x.UInt64),
+    ]
+
+class Contract(x.VariantType):
+    MFIELDS = [
+        ('txtocontract', TxExtraToContract),
+    ]
+
+class TxExtraTagContractSource(x.MessageType):
+    MFIELDS = [
+        ('txpubkey', x.ContainerType, TxExtraPubKey),
+        ('nounce', x.BoolType, x.UInt8),
+        ('nouncetype', TxExtraNonce),
+        #('paymentid', x.ContainerType, x.UInt64),
+        ('contract', Contract),
+    ]
+    
 
 class TxExtraMysteriousMinergate(x.MessageType):
     __slots__ = ['data']

@@ -360,11 +360,13 @@ class Archive(object):
         """
         fname, ftype, params = field[0], field[1], field[2:]
         try:
-            print("trying field:", fname)
-            if 'type' in fname:
-                print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+            #print("trying field:", fname)
+            if 'contract' in fname:
+                #print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+                pass
             else:
-                print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+                #print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+                pass
             self.tracker.push_field(fname)
             if self.writing:
                 await self._dump_message_field(self.iobj, msg, field, fvalue=fvalue)
