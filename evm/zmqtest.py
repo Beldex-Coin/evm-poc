@@ -13,8 +13,9 @@ import time
 import random
 import shutil
 import importlib
+from .beldexserialize.beldex_serialize.helper import msgdecoder as bdxdecoder
 
-bdxdecoder = importlib.import_module("beldex-serialize.beldex_serialize.helper.msgdecoder")
+#bdxdecoder = importlib.import_module("beldex-serialize.beldex_serialize.helper.msgdecoder")
 
 context = zmq.Context()
 socket = context.socket(zmq.DEALER)
@@ -92,9 +93,9 @@ while True:
             #print("Extra [2] hex", m[2].hex())
             otx = bdxdecoder.decodePrefix(prefix=m[2])
             print(otx)
-            if otx.txtype==5:
+            if otx.txtype==5: #txtype_contract
                 contract = bdxdecoder.decodeContract(otx.extra)
-                print("Handle contract {}".format(''.join(chr(x) for x in contract.contract.contact_name)))
+                if __debug__: print("Handle contract name: {}".format(''.join(chr(x) for x in contract.contract.contact_name)))
     elif len(m) == 3 and m[0] == b'notify.block':
         print("New block: Height {}, hash {}".format(int(m[1]), m[2].hex()))
     else:
