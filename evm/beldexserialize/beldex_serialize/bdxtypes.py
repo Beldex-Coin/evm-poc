@@ -55,7 +55,6 @@ class SecretKey(ECKey):
 class ECPublicKey(ECPoint):
     __slots__ = ['data']
 
-
 class KeyImage(ECPoint):
     __slots__ = ['data']
 
@@ -851,30 +850,84 @@ class TxExtraAdditionalPubKeys(x.MessageType):
         ('data', x.ContainerType, ECPublicKey),
     ]
 
-class TxExtraToContract(x.MessageType):
-    __slots__ = ['version', 'contact_name', 'contract_source', 'deposit_amount'] 
-    VARIANT_CODE = 0x42
+class ContractType(object):
+    Create = 0
+    PublicMethod =1
+    SignedMethod=2
+    Terminate=3
+    _Count=4
+
+class TxExtraContractPrefix(x.MessageType):
+    __slots__ = ['contract_type', 'contractversion', 'contact_name', 'contact_address'] 
     MFIELDS = [
-        ('version', x.UInt8),
-        ('contact_name', x.ContainerType, x.UInt8),
-        ('contract_source', x.ContainerType, x.UInt8),
-        ('deposit_amount', x.UInt64),
+        ('contract_type', x.UInt8),
+        ('contractversion', x.UInt8),
+        ('contract_name', x.ContainerType, x.UInt8),
+        ('contract_address', AccountPublicAddress), #AccountPublicAddress ?? x.ContainerType, x.UInt8
     ]
 
-class Contract(x.VariantType):
+class ContractCreate(x.MessageType):
     MFIELDS = [
-        ('txtocontract', TxExtraToContract),
+        ('owner_pubkey', ECPublicKey),
+        ('m_spend_secret_key', SecretKey),
+        ('m_view_secret_key', SecretKey),
+        ('contract_source', x.ContainerType, x.UInt8),
+        ('amount', x.UInt64),
     ]
+
+class ContractPublicMethod(x.MessageType):
+    MFIELDS = [
+        ('method', x.ContainerType, x.UInt8),
+        ('args', x.ContainerType, x.UInt8),
+        ('amount', x.UInt64),
+    ]     
+
+class ContractSignedMethod(x.MessageType):
+    MFIELDS = [
+        ('method', x.ContainerType, x.UInt8),
+        ('args', x.ContainerType, x.UInt8),
+        ('amount', x.UInt64),
+        ('signature', Signature), #Todo:test
+    ]    
+
+class ContractTerminate(x.MessageType):
+    MFIELDS = [
+        ('receipt_address', x.ContainerType, x.UInt8),
+        ('method_args', x.ContainerType, x.UInt8),
+        ('signature', Signature), #Todo:test
+    ]                           
+
+class Contract(x.MessageType):
+  
+    VARIANT_CODE = 0x42
+    async def serialize_archive(self, ar, version=None):
+        await ar.message(self, TxExtraContractPrefix)
+        if self.contractversion!=3:return #trow exception
+        if self.contract_type==ContractType.Create:
+            await ar.message(self, ContractCreate)
+        elif self.contract_type==ContractType.PublicMethod:
+            await ar.message(self, ContractPublicMethod)
+        elif self.contract_type==ContractType.SignedMethod:
+            await ar.message(self, ContractSignedMethod)
+        elif self.contract_type==ContractType.Terminate:
+            await ar.message(self, ContractTerminate) 
+        return self
+
+class ContractVariant(x.VariantType):
+    MFIELDS = [
+        ('txtocontract', Contract), #TxExtraContractPrefix
+    ]
+
+
 
 class TxExtraTagContractSource(x.MessageType):
     MFIELDS = [
         ('txpubkey', x.ContainerType, TxExtraPubKey),
         ('nounce', x.BoolType, x.UInt8),
         ('nouncetype', TxExtraNonce),
-        #('paymentid', x.ContainerType, x.UInt64),
-        ('contract', Contract),
+        ('contract', ContractVariant),
     ]
-    
+
 
 class TxExtraMysteriousMinergate(x.MessageType):
     __slots__ = ['data']

@@ -39,24 +39,26 @@ class EVMRPC(object):
         self._loader()
     
     def _getblocks(self, startheight, endheight):
+        print("Begin: {} End: {}".format(startheight, endheight))
         if endheight<=startheight: return "error"
         currentheight = startheight
         blocks = []
         while(currentheight<=endheight):
             jump=99
             if endheight-currentheight < 100 : jump = endheight-currentheight
+            #print("end " + str(endheight) + " current " + str(currentheight))
             blocks_temp =json.loads(self.sendrecv([b'rpc.get_block_headers_range'], 
                                                     [json.dumps({'start_height':currentheight, 'end_height':currentheight+jump, 'get_tx_hashes':True}).encode()])[3])
             blocks += blocks_temp['headers']
             currentheight= currentheight + jump +1
-            print(len(blocks))
+            #print("blocks " + str(len(blocks)) + " heihgt " + str(currentheight))
         return blocks
     
     def _getTxFromBlocks(self, blocks):
         txids =[]
         for block in blocks:
             if 'tx_hashes' in block:
-                print(block)
+                #print(block)
                 txids+=block['tx_hashes']
         return txids
 
@@ -64,26 +66,26 @@ class EVMRPC(object):
         """BruteForce for contract interactions, for here we can find contract_create"""
         contractinteractions={}
         for txid in txids:
-            tx = json.loads(self.sendrecv([b'rpc.get_transaction_pool'], [json.dumps({'tx_extra':True, 'stake_info':True, 'hash':txid}).encode()])[3])
-            txjson = json.loads(tx['transactions'][0]['tx_json'])
+            #tx = json.loads(self.sendrecv([b'rpc.get_transaction_pool'], [json.dumps({'tx_extra':True, 'stake_info':True, 'hash':txid}).encode()])[3])
+            tx = json.loads(self.sendrecv([b'rpc.get_transactions'], [json.dumps({'tx_extra':True, "decode_as_json": True, 'txs_hashes':[txid]}).encode()])[3])
+            txjson = json.loads(tx['txs'][0]['as_json'])
             if txjson['type']==5:
                 contractinteractions[txid] = txjson['extra']
         return contractinteractions
     
     def _decode_interaction(self, interaction):
+        print(''.join('{:02x}'.format(x) for x in interaction[1]))
+        array = [1,45,148,90,51,176,147,127,197,208,50,185,68,221,221,69,240,117,6,189,199,135,237,61,207,101,249,136,229,26,105,228,137,2,9,1,236,217,58,38,111,129,204,142,66,1,3,12,67,111,110,116,114,97,99,116,78,97,109,101,136,146,218,171,42,42,244,64,182,76,234,102,188,66,235,233,61,232,255,159,10,9,245,155,239,217,94,27,186,157,81,234,162,208,0,9,252,235,39,224,29,134,164,137,102,27,82,97,86,117,45,203,77,253,81,141,204,170,84,205,62,70,251,172,14,67,111,110,116,114,97,99,116,77,101,116,104,111,100,16,67,111,110,116,114,97,99,116,65,114,103,117,109,101,110,116,0,228,11,84,2,0,0,0]
         return bdxdecode.decodeContract(interaction[1])
 
     def _create_contract(self, raw_contract):
         contract = raw_contract.contract
-        contract_name = ''.join(chr(x) for x in contract.contact_name)
-        contract_source = contract.contract_source
-        amount = contract.deposit_amount
-        hash = raw_contract.txpubkey
-        if contract_name not in self.contracts: 
-            self.contracts[contract_name] = Contract(hash, contract_name, contract_source, amount)
+        contract_address=''.join('{:02x}'.format(x) for x in contract.contract_address.m_view_public_key)
+        if contract_address not in self.contracts:
+            self.contracts[contract_address] = Contract(contract)
             return True
         else:
-            print(contract_name, contract_source, amount)
+            print("Error Contract Address {} already exist".format(contract_address))
             return False
 
     def _loader(self):
@@ -93,15 +95,18 @@ class EVMRPC(object):
         hfinfo = self.request.get_hfinfo()
         self.hfversion = hfinfo['version']
         self.hfstart = hfinfo['earliest_height']
-        self.blocks = self._getblocks(54810,54810+987)
+        self.blocks = self._getblocks(213000,self.height-1)
         self.contractinteractions = self._searchContractInteractions(self._getTxFromBlocks(self.blocks))
         for interaction in self.contractinteractions.items():
             result = self._decode_interaction(interaction)
-            if hasattr(result.contract, 'contract_source'):
+            if result.contract.contract_type == 0:#ContractMethod = contract_type=0
+                #check hash(owner-name)
                 self._create_contract(result)
-            elif hasattr(result.contract, 'contract_method'):
+            elif result.contract.contract_type == 1: #ContractMethod = contract_type=1
                 pass
-            elif hasattr(result.contract, 'terminate' ):
+            elif result.contract.contract_type == 2: #ContractMethod = contract_type=1
+                pass
+            elif result.contract.contract_type == 3: #ContractMethod = contract_type=3
                 del self.contracts[result.contract.contract_name] #''join thing
         if __debug__:
             print('wait')
@@ -117,7 +122,6 @@ class EVMRPC(object):
         if args : msg+=args
         if kwarks : msg+=kwarks
         msg.insert(1, b'hi') #TODO: do something smart here
-        print(msg)
         self._zmqsocket.send_multipart(msg)  
         for i in range(0,timeout*100):
             if len(self._pollin.poll(timeout=1)) > 0:

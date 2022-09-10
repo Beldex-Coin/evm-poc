@@ -362,9 +362,9 @@ class Archive(object):
         try:
             #print("trying field:", fname)
             if 'contract' in fname:
-                #print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
+                #print("Contract message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
                 pass
-            else:
+            elif __debug__:
                 #print("message_field -> read {} data: {} param: {}".format(self.iobj.nread, self.iobj.buffer[self.iobj.nread:self.iobj.nread+10].hex(),params))
                 pass
             self.tracker.push_field(fname)
