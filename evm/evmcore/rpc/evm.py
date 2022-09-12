@@ -14,7 +14,7 @@ class Contract(object):
             self.m_view_public_key = ''.join('{:02x}'.format(x) for x in contract.contract_address.m_view_public_key)
             self.owner_pubkey = ''.join('{:02x}'.format(x) for x in contract.owner_pubkey)
             self.contract_name = ''.join(chr(x) for x in contract.contract_name)
-            self.contract_versoin = contract.contractversion
+            self.contract_version = contract.contractversion
             self.m_spend_secret_key = ''.join('{:02x}'.format(x) for x in contract.m_spend_secret_key)
             self.m_view_secret_key = ''.join('{:02x}'.format(x) for x in contract.m_view_secret_key)
             self.contract_source = contract.contract_source

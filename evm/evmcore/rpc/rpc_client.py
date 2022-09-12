@@ -7,6 +7,7 @@ import time
 import json
 from .beldexdrpc import Requester
 from .evm import Contract
+from evmcore.rpc.runner import EVMRunner
 from beldexserialize.beldex_serialize.helper import msgdecoder as bdxdecode
 
 class EVMRPC(object):
@@ -28,7 +29,6 @@ class EVMRPC(object):
         else:
             self._zmqsocket.connect(target)
         self._pollin = zmq.Poller()
-        
         self._pollin.register(self._zmqsocket,zmq.POLLIN)
         self._pollout = zmq.Poller()
         self._pollout.register(self._zmqsocket,zmq.POLLOUT)
@@ -107,9 +107,11 @@ class EVMRPC(object):
             elif result.contract.contract_type == 2: #ContractMethod = contract_type=1
                 pass
             elif result.contract.contract_type == 3: #ContractMethod = contract_type=3
-                del self.contracts[result.contract.contract_name] #''join thing
+                del self.contracts[result.contract.contract_address] #''join thing
         if __debug__:
             print('wait')
+        runner = EVMRunner(self)
+        runner.start()
     
     def block_loader(height=None):
         pass
