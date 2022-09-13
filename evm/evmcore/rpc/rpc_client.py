@@ -7,8 +7,10 @@ import time
 import json
 from .beldexdrpc import Requester
 from .evm import Contract
-from evmcore.rpc.runner import EVMRunner
+#from evmcore.rpc.runner import EVMRunner
 from beldexserialize.beldex_serialize.helper import msgdecoder as bdxdecode
+
+import logging
 
 class EVMRPC(object):
     """
@@ -39,7 +41,7 @@ class EVMRPC(object):
         self._loader()
     
     def _getblocks(self, startheight, endheight):
-        print("Begin: {} End: {}".format(startheight, endheight))
+        logging.info("Begin: {} End: {}".format(startheight, endheight))
         if endheight<=startheight: return "error"
         currentheight = startheight
         blocks = []
@@ -74,8 +76,6 @@ class EVMRPC(object):
         return contractinteractions
     
     def _decode_interaction(self, interaction):
-        print(''.join('{:02x}'.format(x) for x in interaction[1]))
-        array = [1,45,148,90,51,176,147,127,197,208,50,185,68,221,221,69,240,117,6,189,199,135,237,61,207,101,249,136,229,26,105,228,137,2,9,1,236,217,58,38,111,129,204,142,66,1,3,12,67,111,110,116,114,97,99,116,78,97,109,101,136,146,218,171,42,42,244,64,182,76,234,102,188,66,235,233,61,232,255,159,10,9,245,155,239,217,94,27,186,157,81,234,162,208,0,9,252,235,39,224,29,134,164,137,102,27,82,97,86,117,45,203,77,253,81,141,204,170,84,205,62,70,251,172,14,67,111,110,116,114,97,99,116,77,101,116,104,111,100,16,67,111,110,116,114,97,99,116,65,114,103,117,109,101,110,116,0,228,11,84,2,0,0,0]
         return bdxdecode.decodeContract(interaction[1])
 
     def _create_contract(self, raw_contract):
@@ -95,7 +95,7 @@ class EVMRPC(object):
         hfinfo = self.request.get_hfinfo()
         self.hfversion = hfinfo['version']
         self.hfstart = hfinfo['earliest_height']
-        self.blocks = self._getblocks(213000,self.height-1)
+        self.blocks = self._getblocks(213000,self.height-1) #requesting currentblockheight from beldexrpc gives error, so -1
         self.contractinteractions = self._searchContractInteractions(self._getTxFromBlocks(self.blocks))
         for interaction in self.contractinteractions.items():
             result = self._decode_interaction(interaction)
@@ -110,8 +110,7 @@ class EVMRPC(object):
                 del self.contracts[result.contract.contract_address] #''join thing
         if __debug__:
             print('wait')
-        runner = EVMRunner(self)
-        runner.start()
+        return
     
     def block_loader(height=None):
         pass
