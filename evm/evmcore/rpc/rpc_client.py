@@ -78,6 +78,14 @@ class EVMRPC(object):
     def _decode_interaction(self, interaction):
         return bdxdecode.decodeContract(interaction[1])
 
+    def create_contract(self, contract):
+        if contract.contract_address not in self.contracts:
+            self.contracts[contract.contract_address] = Contract(contract)
+            return True
+        else:
+            print("Error Contract Address {} already exist".format(contract.contract_address))
+            return False
+
     def _create_contract(self, raw_contract):
         contract = raw_contract.contract
         contract_address=''.join('{:02x}'.format(x) for x in contract.contract_address.m_view_public_key)
