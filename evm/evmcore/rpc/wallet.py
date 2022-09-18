@@ -35,6 +35,7 @@ class Wallet(object):
     def __init__(self, protocol='http', host='127.0.0.1', port=0, idx=0):
         self.host = host
         self.port = port
+        self.string = "{protocol}://{host}:{port}".format(protocol=protocol, host=host, port=port if port else 18090+idx)
         self.rpc = JSONRPC('{protocol}://{host}:{port}'.format(protocol=protocol, host=host, port=port if port else 18090+idx))
 
     def transfer(self, destinations, account_index = 0, subaddr_indices = [], priority = 0, ring_size = 0, unlock_time = 0, payment_id = '', get_tx_key = True, do_not_relay = False, get_tx_hex = False, get_tx_metadata = False):
@@ -56,7 +57,8 @@ class Wallet(object):
             'jsonrpc': '2.0', 
             'id': '0'    
         }
-        return self.rpc.send_json_rpc_request(transfer)   
+        result = self.rpc.send_json_rpc_request(transfer)  
+        return result  
 
     def transfer_split(self, destinations, account_index = 0, subaddr_indices = [], priority = 0, ring_size = 0, unlock_time = 0, payment_id = '', get_tx_key = True, do_not_relay = False, get_tx_hex = False, get_tx_metadata = False):
         transfer = {

@@ -28,6 +28,7 @@
 
 import requests
 import json
+import logging
 
 class Response(dict):
     def __init__(self, d):
@@ -68,9 +69,9 @@ class JSONRPC(object):
             data=json.dumps(inputs),
             headers={'content-type': 'application/json'})
         res = res.json()
-        
-        assert 'error' not in res, res
 
+        if 'error'  in res:
+            logging.warning("Error JSONRPC: {}".format(res['error']))
         if result_field:
             res = res[result_field]
 

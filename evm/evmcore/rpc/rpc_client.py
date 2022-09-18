@@ -103,7 +103,7 @@ class EVMRPC(object):
         hfinfo = self.request.get_hfinfo()
         self.hfversion = hfinfo['version']
         self.hfstart = hfinfo['earliest_height']
-        self.blocks = self._getblocks(213000,self.height-1) #requesting currentblockheight from beldexrpc gives error, so -1
+        self.blocks = self._getblocks(1,self.height-1) #requesting currentblockheight from beldexrpc gives error, so -1
         self.contractinteractions = self._searchContractInteractions(self._getTxFromBlocks(self.blocks))
         for interaction in self.contractinteractions.items():
             result = self._decode_interaction(interaction)
