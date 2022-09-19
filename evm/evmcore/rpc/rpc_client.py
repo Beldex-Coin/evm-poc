@@ -88,7 +88,11 @@ class EVMRPC(object):
 
     def _create_contract(self, raw_contract):
         contract = raw_contract.contract
-        contract_address=''.join('{:02x}'.format(x) for x in contract.contract_address.m_view_public_key)
+#        contract_address=''.join('{:02x}'.format(x) for x in contract.contract_address.m_view_public_key).encode('utf-8') if contract.contractversion==3 else ''.join('{:02x}'.format(x) for x in contract.contract_address)
+        if contract.contractversion<=3:
+            return False #Dont handle old contract type
+        else:
+            contract_address = ''.join(chr(x) for x in contract.contract_address)
         if contract_address not in self.contracts:
             self.contracts[contract_address] = Contract(contract)
             return True

@@ -72,6 +72,7 @@ class JSONRPC(object):
 
         if 'error'  in res:
             logging.warning("Error JSONRPC: {}".format(res['error']))
+            result_field = None
         if result_field:
             res = res[result_field]
 

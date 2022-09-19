@@ -13,7 +13,7 @@ if __name__ =="__main__":
     (options, args) = parser.parse_args()
     if options.contract_address:
         result = InfoClient(options.contract_address)
-        print("Result: {}}".format(result))
+        print("Result: {}".format(result.result))
     else:
         print(options.rpcsock)
         EVMRunner(options.rpcsock)

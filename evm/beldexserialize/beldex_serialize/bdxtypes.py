@@ -857,13 +857,25 @@ class ContractType(object):
     Terminate=3
     _Count=4
 
+class ContractAddressv3(x.MessageType):
+    __slots__ = ['contract_address']
+    MFIELDS = [
+        ('contract_address', AccountPublicAddress)
+    ]
+
+class ContractAddressv4(x.MessageType):
+    __slots__ = ['contract_address']
+    MFIELDS = [
+        ('contract_address', x.ContainerType, x.UInt8)
+    ]    
+
 class TxExtraContractPrefix(x.MessageType):
-    __slots__ = ['contract_type', 'contractversion', 'contact_name', 'contact_address'] 
+    __slots__ = ['contract_type', 'contractversion', 'contact_name' ] #, 'contact_address'
     MFIELDS = [
         ('contract_type', x.UInt8),
         ('contractversion', x.UInt8),
         ('contract_name', x.ContainerType, x.UInt8),
-        ('contract_address', AccountPublicAddress), #AccountPublicAddress ?? x.ContainerType, x.UInt8
+#        ('contract_address', x.ContainerType, x.UInt8), #AccountPublicAddress ?? x.ContainerType, x.UInt8 (AccountPublicAddress)
     ]
 
 class ContractCreate(x.MessageType):
@@ -898,11 +910,14 @@ class ContractTerminate(x.MessageType):
     ]                           
 
 class Contract(x.MessageType):
-  
     VARIANT_CODE = 0x42
     async def serialize_archive(self, ar, version=None):
         await ar.message(self, TxExtraContractPrefix)
-        if self.contractversion!=3:return #trow exception
+        if self.contractversion==3:
+            await ar.message(self, ContractAddressv3) #trow exception
+        elif self.contractversion==4:
+            await ar.message(self, ContractAddressv4) #trow exception
+        else: return #throw error
         if self.contract_type==ContractType.Create:
             await ar.message(self, ContractCreate)
         elif self.contract_type==ContractType.PublicMethod:
@@ -918,8 +933,6 @@ class ContractVariant(x.VariantType):
         ('txtocontract', Contract), #TxExtraContractPrefix
     ]
 
-
-
 class TxExtraTagContractSource(x.MessageType):
     MFIELDS = [
         ('txpubkey', x.ContainerType, TxExtraPubKey),
@@ -927,7 +940,6 @@ class TxExtraTagContractSource(x.MessageType):
         ('nouncetype', TxExtraNonce),
         ('contract', ContractVariant),
     ]
-
 
 class TxExtraMysteriousMinergate(x.MessageType):
     __slots__ = ['data']
