@@ -109,7 +109,7 @@ class Contract(object):
             transfersuccesful = False #get_transfer
             check = self.wallet_rpc.get_transfer_by_txid(tx_hash)
             if check['transfer']['type']!='pending':
-                if check['transfer']['confirmations'] > 4: 
+                if check['transfer']['confirmations'] > 2: 
                     transfersuccesful=True
             if transfersuccesful:
                 logging.info("Transaction from tx: {} Succesfull".format(tx_hash))
