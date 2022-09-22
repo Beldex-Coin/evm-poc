@@ -110,12 +110,12 @@ class ContractHandler(object):
                 if len(self.requests) == 0:
                     await asyncio.sleep(10)
                 else:
-                    running_contract = None
                     for contract_interaction, contract_address in self.requests:
-                        running_contract = [contract_interaction,contract_address]
+                        running_contract.append([contract_interaction,contract_address])
                         logging.info("Received Contract {} type : {}".format(contract_address, contract_interaction.contract_type))
                         if contract_interaction.contract_type == ContractType.Create:
                             if contract_address not in self.evmcontext.contracts:
+                                logging.info("Creating Contract {}".format(contract_address))
                                 result = self.evmcontext.create_contract(contract_interaction)
                         elif contract_interaction.contract_type == ContractType.PublicMethod:
                             self.methodcalls.append(asyncio.ensure_future(self.handle_method_call(contract_address, contract_interaction, ContractType.PublicMethod)))
@@ -128,7 +128,7 @@ class ContractHandler(object):
                     self.requests.pop(self.requests.index(running_contract))
             except Exception as e: 
                 self.requests.pop(self.requests.index(running_contract))
-                logging.warning(e)
+                logging.warning("HandleReqquest Warning: {}".format(e))
 
     def add_request(self,contract, contract_address):
         self.requests.append([contract, contract_address])

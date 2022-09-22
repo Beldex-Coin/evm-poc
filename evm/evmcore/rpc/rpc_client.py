@@ -100,10 +100,11 @@ class EVMRPC(object):
         else:
             contract_address = ''.join(chr(x) for x in contract.contract_address)
         if contract_address not in self.contracts:
+            logging.info("Loading Contract {}".format(contract_address))
             self.contracts[contract_address] = Contract(contract)
             return True
         else:
-            print("Error Contract Address {} already exist".format(contract_address))
+            logging.warning("Error Contract Address {} already exist".format(contract_address))
             return False
 
     def _loader(self):
