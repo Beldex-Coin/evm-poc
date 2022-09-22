@@ -80,11 +80,16 @@ class EVMRPC(object):
         return bdxdecode.decodeContract(interaction[1])
 
     def create_contract(self, contract):
-        if contract.contract_address not in self.contracts:
-            self.contracts[contract.contract_address] = Contract(contract)
+        if contract.contractversion<=3:
+            return False #Dont handle old contract type
+        else:
+            contract_address = ''.join(chr(x) for x in contract.contract_address)
+        if contract_address not in self.contracts:
+            logging.info("Creating Contract {}".format(contract_address))
+            self.contracts[contract_address] = Contract(contract)
             return True
         else:
-            print("Error Contract Address {} already exist".format(contract.contract_address))
+            logging.info("Error Contract Address {} already exist".format(contract_address))
             return False
 
     def _create_contract(self, raw_contract):

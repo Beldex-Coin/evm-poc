@@ -104,8 +104,9 @@ class Contract(object):
     
     async def wait_for_verified_tx(self, tx_hash, timeout=240):
         transfersuccesful = False #get_transfer
-        for x in range(0, int(timeout/1)):
-            await asyncio.sleep(1)
+        for x in range(0, int(timeout/10)):
+            await asyncio.sleep(10)
+            logging.info("Waiting on succesfull transfer for tx: {} waiting: {}sec".format(tx_hash, int((x+1)*10)))
             transfersuccesful = False #get_transfer
             check = self.wallet_rpc.get_transfer_by_txid(tx_hash)
             if check['transfer']['type']!='pending':
@@ -132,6 +133,7 @@ class Contract(object):
                 else:
                     destination['amount']=self.to_atomic(amounts[0])
                 ctrdestionations.append(destination)
+            logging.info("Sending Transfer Split to {} amount ".format(destination_addresses, amounts))
             result = self.wallet_rpc.transfer_split(destinations=ctrdestionations, priority=1, get_tx_hex=True, get_tx_metadata = True, do_not_relay = False)
             for amount in amounts:
                 self.amount -= amount
