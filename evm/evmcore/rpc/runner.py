@@ -147,6 +147,7 @@ class SubBeldexTX(object):
 
     async def subscribe(self):
         await self.socket.send_multipart([b'sub.mempool', b'_txallsub', b'all'])
+        logging.info("subscribing to {}".format("sub.mempool"))
         self.subbed = set()
     
     async def run_subscribe(self):
@@ -154,6 +155,7 @@ class SubBeldexTX(object):
         while True:
             try:
                 msg = await self.socket.recv_multipart()
+                logging.info("received msg in SUB {}".format(msg))
                 if len(msg) == 3 and msg[0] == b'REPLY' and msg[1] in (b'_blocksub', b'_txallsub', b'_txflashesub') and msg[2] in (b'OK', b'ALREADY'):
                     if msg[2] == b'ALREADY':
                         continue
@@ -162,8 +164,9 @@ class SubBeldexTX(object):
                         print("Re-subscribed to {} (perhaps the server restarted?)".format(what))
                     else:
                         self.subbed.add(what)
+                        logging.info("subscribed to {}".format(what))
                 elif len(msg) == 3 and msg[0] == b'notify.mempool':
-                    logging.debug("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
+                    logging.info("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
                     if len(msg)>2:
                         otx = await bdxdecoder.decodePrefixRunner(prefix=msg[2].hex())
                         if otx.txtype==5: #txtype_contract
