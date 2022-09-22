@@ -29,6 +29,7 @@
 import requests
 import json
 import logging
+logging.basicConfig(level=logging.INFO)
 
 class Response(dict):
     def __init__(self, d):

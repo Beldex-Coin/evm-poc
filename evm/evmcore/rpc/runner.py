@@ -134,14 +134,14 @@ class ContractHandler(object):
         self.requests.append([contract, contract_address])
 
 class SubBeldexTX(object):
-    def __init__(self, evmcontext, contracthandler):
+    def __init__(self, evmcontext, contracthandler, connectionstring):
         self.evmcontext = evmcontext
         self.contracthandler = contracthandler
         self.ctx = zmq.asyncio.Context()
         self.socket = self.ctx.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.CONNECT_TIMEOUT, 5000)
         self.socket.setsockopt(zmq.HANDSHAKE_IVL, 5000)
-        self.socket.connect('ipc:///home/martijn/.beldex/testnet/beldexd.sock')
+        self.socket.connect(connectionstring)
         self.subbed = None
         asyncio.run(self.subscribe())
 
@@ -209,7 +209,7 @@ class EVMRunner(object):
         self.beldexdrpc = rpc_client.EVMRPC(connectionstring,timeout=5)
         self.evmserver = EVMServer(self.beldexdrpc)
         self.contracthandler = ContractHandler(self.beldexdrpc)
-        self.subscription = SubBeldexTX(self.beldexdrpc, self.contracthandler)
+        self.subscription = SubBeldexTX(self.beldexdrpc, self.contracthandler, connectionstring)
         self.pingpong = PingPong(self.beldexdrpc)
         global globalhandler
         globalhandler = self.contracthandler

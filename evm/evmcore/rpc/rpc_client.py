@@ -11,6 +11,7 @@ from .evm import Contract
 from beldexserialize.beldex_serialize.helper import msgdecoder as bdxdecode
 
 import logging
+logging.basicConfig(level=logging.INFO)
 
 class EVMRPC(object):
     """

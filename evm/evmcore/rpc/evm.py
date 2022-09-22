@@ -4,6 +4,7 @@ import evmcore.rpc.wallet
 import evmcore.rpc.daemon
 import evmcore.rpc.rpc
 import logging
+logging.basicConfig(level=logging.INFO)
 import asyncio
 from binascii import hexlify, unhexlify
 import nacl.bindings
@@ -99,7 +100,7 @@ class Contract(object):
             while not await self.check_connected_wallet():
                 await asyncio.sleep(0.1)
     
-    async def wait_for_verified_tx(self, tx_hash, timeout=120):
+    async def wait_for_verified_tx(self, tx_hash, timeout=240):
         transfersuccesful = False #get_transfer
         for x in range(0, int(timeout/1)):
             await asyncio.sleep(1)
@@ -173,7 +174,7 @@ class DummyContract(object):
         print("Hello World From Contract")
     
     async def transfer_to(self, destination):
-        amount = 7
+        amount = 11 #without fee
         await self.contract.transfer(destination, amount)
 
     async def transfer_split(self, *args):
