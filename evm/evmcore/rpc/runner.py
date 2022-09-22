@@ -77,7 +77,7 @@ class ContractHandler(object):
 
     async def contract_waiter(self, contract_address):
         while self.evmcontext.contracts[contract_address].state == ContractState.Running:
-            asyncio.sleep(1)
+            await asyncio.sleep(1)
 
     def load_contract(self, contract_address):
         logging.debug("Loading Contract: {}".format(contract_address))
@@ -155,7 +155,7 @@ class SubBeldexTX(object):
         while True:
             try:
                 msg = await self.socket.recv_multipart()
-                logging.info("received msg in SUB {}".format(msg))
+                #logging.info("received msg in SUB {}".format(msg))
                 if len(msg) == 3 and msg[0] == b'REPLY' and msg[1] in (b'_blocksub', b'_txallsub', b'_txflashesub') and msg[2] in (b'OK', b'ALREADY'):
                     if msg[2] == b'ALREADY':
                         continue
@@ -166,7 +166,7 @@ class SubBeldexTX(object):
                         self.subbed.add(what)
                         logging.info("subscribed to {}".format(what))
                 elif len(msg) == 3 and msg[0] == b'notify.mempool':
-                    logging.info("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
+                    logging.debug("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
                     if len(msg)>2:
                         otx = await bdxdecoder.decodePrefixRunner(prefix=msg[2].hex())
                         if otx.txtype==5: #txtype_contract
