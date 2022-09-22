@@ -111,7 +111,7 @@ class ContractHandler(object):
                     await asyncio.sleep(10)
                 else:
                     for contract_interaction, contract_address in self.requests:
-                        running_contract.append([contract_interaction,contract_address])
+                        running_contract= [contract_interaction,contract_address]
                         logging.info("Received Contract {} type : {}".format(contract_address, contract_interaction.contract_type))
                         if contract_interaction.contract_type == ContractType.Create:
                             if contract_address not in self.evmcontext.contracts:
