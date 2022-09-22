@@ -75,6 +75,7 @@ class Contract(object):
             logging.info("JSON Wallet Created: contract address {} given address {}".format(self.bdx_address, self.created_wallet_address))
             #get_balance(self, account_index = 0, address_indices = [], all_accounts = False, strict = False)
         elif response['error']=={'code': -1, 'message': 'Wallet already exists.'}:
+            logging.info("Opening Wallet: {}".format(self.bdx_address))
             self.wallet_rpc.open_wallet(self.bdx_address)
         response = self.wallet_rpc.get_balance()
         if 'unlocked_balance' in response:
@@ -86,6 +87,7 @@ class Contract(object):
         result = self.wallet_rpc.get_balance(account_index=0)
         if result['per_subaddress'][0]['address'] != self.created_wallet_address:
             await self.create_wallet()
+            logging.info("Opening Wallet: {}".format(self.bdx_address))
             self.wallet_rpc.open_wallet(self.bdx_address) 
             result = self.wallet_rpc.get_balance(account_index=0)
             self.created_wallet_address = result['per_subaddress'][0]['address']
