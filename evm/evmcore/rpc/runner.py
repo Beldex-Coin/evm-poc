@@ -28,7 +28,7 @@ class EVMServer(object):
         try:
             logging.info("MSG handle_request : {}".format(msg))
             if msg[0]==b'info':
-                contract_address=msg[1]
+                contract_address=msg[1].decode('utf-8')
                 if contract_address in self.evmcontext.contracts:
                     return [b"info", 
                             "Amount: {}".format(self.evmcontext.contracts[contract_address].amount).encode('utf-8'),
@@ -90,10 +90,18 @@ class ContractHandler(object):
             await self.contract_waiter(contract_address) #wait for contract
         self.evmcontext.contracts[contract_address].state = ContractState.Running
         #Dirty way of doing this
-        contract_obj = self.load_contract(contract_address)
-        funct = getattr(contract_obj, contract_interaction.method)
-        await funct(contract_interaction.args)
-        self.evmcontext.contracts[contract_address].state = ContractState.Idle
+        try:
+            contract_obj = self.load_contract(contract_address)
+            calling_method = ''.join(chr(x) for x in contract_interaction.method)
+            logging.info("Calling method: {} for Address: {} ContractName: {}".format(calling_method, 
+                                                                                        contract_address,
+                                                                                        self.evmcontext.contracts[contract_address].contract_name.decode('utf-8')))
+            funct = getattr(contract_obj, calling_method)
+            await funct(''.join(chr(x) for x in contract_interaction.args))
+            self.evmcontext.contracts[contract_address].state = ContractState.Idle
+        except Exception as e: 
+            logging.warning(e)
+            self.evmcontext.contracts[contract_address].state = ContractState.Idle
     
     async def handle_requests(self):
         while True:
@@ -155,10 +163,7 @@ class SubBeldexTX(object):
                     else:
                         self.subbed.add(what)
                 elif len(msg) == 3 and msg[0] == b'notify.mempool':
-                    logging.info("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
-                    hex = ''.join('{:02x}'.format(x) for x in msg[2])
-                    hex = msg[2].hex()
-                    hex = msg[2]
+                    logging.debug("New TX: {} prefix {}".format(msg[1].hex(), msg[2].hex()))
                     if len(msg)>2:
                         otx = await bdxdecoder.decodePrefixRunner(prefix=msg[2].hex())
                         if otx.txtype==5: #txtype_contract
@@ -195,8 +200,6 @@ class InfoClient(object):
         await asyncio.sleep(0.1) #wait a bit for bind
         await self.socket.send_multipart([b'info', contract_address.encode('utf-8')])
         self.result = await self.socket.recv_multipart()
-        
-
 
 class EVMRunner(object):
     def __init__(self, connectionstring):

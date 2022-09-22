@@ -112,7 +112,6 @@ class EVMRPC(object):
         for interaction in self.contractinteractions.items():
             result = self._decode_interaction(interaction)
             if result.contract.contract_type == 0:#ContractMethod = contract_type=0
-                #check hash(owner-name)
                 self._create_contract(result)
             elif result.contract.contract_type == 1: #ContractMethod = contract_type=1
                 pass
@@ -120,8 +119,6 @@ class EVMRPC(object):
                 pass
             elif result.contract.contract_type == 3: #ContractMethod = contract_type=3
                 del self.contracts[result.contract.contract_address] #''join thing
-        if __debug__:
-            print('wait')
         return
     
     def block_loader(height=None):

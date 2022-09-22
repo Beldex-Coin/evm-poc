@@ -38,7 +38,7 @@ class Wallet(object):
         self.string = "{protocol}://{host}:{port}".format(protocol=protocol, host=host, port=port if port else 18090+idx)
         self.rpc = JSONRPC('{protocol}://{host}:{port}'.format(protocol=protocol, host=host, port=port if port else 18090+idx))
 
-    def transfer(self, destinations, account_index = 0, subaddr_indices = [], priority = 0, ring_size = 0, unlock_time = 0, payment_id = '', get_tx_key = True, do_not_relay = True, get_tx_hex = False, get_tx_metadata = False):
+    def transfer(self, destinations, account_index = 0, subaddr_indices = [], priority = 0, ring_size = 0, unlock_time = 0, payment_id = '', get_tx_key = True, do_not_relay = False, get_tx_hex = False, get_tx_metadata = False):
         transfer = {
             'method': 'transfer',
             'params': {
