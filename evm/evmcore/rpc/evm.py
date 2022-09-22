@@ -47,11 +47,7 @@ class Contract(object):
         self.amount = self.to_bdx(contract.amount)
         self.json_connection_str = '{protocol}://{host}:{port}'.format(protocol='http', host='127.0.0.1', port=33452)
         self.created_wallet_address=None
-        try:
-            asyncio.run(self.create_wallet())
-        except Exception as e:
-            logging.debug("Asyncio Error probably {}".format(e))
-            self.nosync_create_wallet()
+        self.nosync_create_wallet()
         self.wallet_rpc = None
     
     def __str__(self):
