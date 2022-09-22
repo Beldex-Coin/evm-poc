@@ -89,7 +89,7 @@ class EVMRPC(object):
             self.contracts[contract_address] = Contract(contract)
             return True
         else:
-            logging.info("Error Contract Address {} already exist".format(contract_address))
+            logging.debug("Cant Create Contract {} Wallet Already made a Contract".format(contract_address))
             return False
 
     def _create_contract(self, raw_contract):
@@ -104,7 +104,7 @@ class EVMRPC(object):
             self.contracts[contract_address] = Contract(contract)
             return True
         else:
-            logging.warning("Error Contract Address {} already exist".format(contract_address))
+            logging.debug("Cant Create Contract {} Wallet Already made a Contract".format(contract_address))
             return False
 
     def _loader(self):

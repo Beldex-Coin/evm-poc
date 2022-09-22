@@ -115,8 +115,10 @@ class ContractHandler(object):
                         logging.info("Received Contract {} type : {}".format(contract_address, contract_interaction.contract_type))
                         if contract_interaction.contract_type == ContractType.Create:
                             if contract_address not in self.evmcontext.contracts:
-                                logging.info("Creating Contract {}".format(contract_address))
+#                                logging.info("Creating Contract {}".format(contract_address))
                                 result = self.evmcontext.create_contract(contract_interaction)
+                            else:
+                                logging.info("Cant Create Contract {} Wallet Already made a Contract".format(contract_address))
                         elif contract_interaction.contract_type == ContractType.PublicMethod:
                             self.methodcalls.append(asyncio.ensure_future(self.handle_method_call(contract_address, contract_interaction, ContractType.PublicMethod)))
                         elif contract_interaction.contract_type == ContractType.SignedMethod:
