@@ -50,7 +50,7 @@ class Contract(object):
         try:
             asyncio.run(self.create_wallet())
         except Exception as e:
-            logging.warning("Asyncio Error probably {}".format(e))
+            logging.debug("Asyncio Error probably {}".format(e))
             self.nosync_create_wallet()
         self.wallet_rpc = None
     
@@ -68,6 +68,7 @@ class Contract(object):
         return int(amount) / pow(10, 9)
     
     def nosync_create_wallet(self):
+        logging.info("Connect to Wallet  address {}".format(self.bdx_address))
         self.wallet_rpc = evmcore.rpc.wallet.Wallet(protocol='http', host='127.0.0.1', port=33452)
         response = self.wallet_rpc.generate_from_keys(filename=self.bdx_address, password="", address=self.bdx_address, spendkey=self.m_spend_secret_key.decode('utf-8'),viewkey=self.m_view_secret_key.decode('utf-8'))
         if 'address' in response:
